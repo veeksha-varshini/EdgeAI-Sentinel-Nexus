@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EdgeAI · Sentinel Nexus</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian:  '#030712',
+            'neon-cyan':   '#06b6d4',
+            'neon-violet': '#8b5cf6',
+            'neon-green':  '#22c55e',
+            'neon-red':    '#ef4444',
+            'neon-amber':  '#f59e0b',
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
+          },
+          boxShadow: {
+            'glow-cyan':   '0 0 20px 3px rgba(6,182,212,0.4)',
+            'glow-violet': '0 0 20px 3px rgba(139,92,246,0.4)',
+            'glow-red':    '0 0 20px 3px rgba(239,68,68,0.5)',
+            'glow-green':  '0 0 20px 3px rgba(34,197,94,0.4)',
+          },
+          backdropBlur: { xl: '24px' },
+          keyframes: {
+            'pulse-ring': {
+              '0%, 100%': { boxShadow: '0 0 0 0 rgba(6,182,212,0.6)' },
+              '50%': { boxShadow: '0 0 0 12px rgba(6,182,212,0)' },
+            },
+            'scan': {
+              '0%': { transform: 'translateY(-100%)' },
+              '100%': { transform: 'translateY(100vh)' },
+            },
+            'flicker': {
+              '0%,100%': { opacity: '1' }, '92%': { opacity: '0.9' },
+              '93%': { opacity: '0.4' },   '94%': { opacity: '1' },
+              '96%': { opacity: '0.7' },   '98%': { opacity: '1' },
+            },
+            'blink': {
+              '0%,100%': { opacity: '1' }, '50%': { opacity: '0' }
+            },
+            'slide-in': {
+              '0%': { opacity: '0', transform: 'translateX(40px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' },
+            },
+            'lockdown-flash': {
+              '0%,100%': { backgroundColor: 'rgba(239,68,68,0)' },
+              '50%': { backgroundColor: 'rgba(239,68,68,0.15)' },
+            },
+            'gauge-fill': {
+              '0%': { strokeDashoffset: '283' },
+              '100%': { strokeDashoffset: '0' },
+            }
+          },
+          animation: {
+            'pulse-ring':     'pulse-ring 2s ease-in-out infinite',
+            'scan':           'scan 4s linear infinite',
+            'flicker':        'flicker 8s infinite',
+            'blink':          'blink 1s step-end infinite',
+            'slide-in':       'slide-in 0.4s ease-out',
+            'lockdown-flash': 'lockdown-flash 0.6s ease-in-out infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- JetBrains Mono font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --neon-cyan:   #06b6d4;
+      --neon-violet: #8b5cf6;
+      --neon-green:  #22c55e;
+      --neon-red:    #ef4444;
+      --neon-amber:  #f59e0b;
+      --bg-obsidian: #030712;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg-obsidian);
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      overflow-x: hidden;
+      height: 100%;
+    }
+
+    /* ── Glassmorphism card ───────────────────────────────────── */
+    .glass {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+    }
+
+    .glass-cyan {
+      border-color: rgba(6,182,212,0.3);
+      box-shadow: 0 0 0 1px rgba(6,182,212,0.1) inset,
+                  0 4px 32px rgba(6,182,212,0.08);
+    }
+
+    .glass-violet {
+      border-color: rgba(139,92,246,0.3);
+      box-shadow: 0 0 0 1px rgba(139,92,246,0.1) inset,
+                  0 4px 32px rgba(139,92,246,0.08);
+    }
+
+    .glass-red {
+      border-color: rgba(239,68,68,0.4);
+      box-shadow: 0 0 0 1px rgba(239,68,68,0.15) inset,
+                  0 4px 32px rgba(239,68,68,0.12);
+    }
+
+    /* ── Neon text glow ──────────────────────────────────────── */
+    .text-glow-cyan   { text-shadow: 0 0 10px rgba(6,182,212,0.8),  0 0 30px rgba(6,182,212,0.4); }
+    .text-glow-violet { text-shadow: 0 0 10px rgba(139,92,246,0.8), 0 0 30px rgba(139,92,246,0.4); }
+    .text-glow-red    { text-shadow: 0 0 10px rgba(239,68,68,0.9),  0 0 30px rgba(239,68,68,0.5); }
+    .text-glow-green  { text-shadow: 0 0 10px rgba(34,197,94,0.8),  0 0 30px rgba(34,197,94,0.4); }
+    .text-glow-amber  { text-shadow: 0 0 10px rgba(245,158,11,0.8), 0 0 30px rgba(245,158,11,0.4); }
+
+    /* ── Neon border glow ────────────────────────────────────── */
+    .border-glow-cyan   { box-shadow: 0 0 0 1px rgba(6,182,212,0.5), 0 0 20px rgba(6,182,212,0.25); }
+    .border-glow-violet { box-shadow: 0 0 0 1px rgba(139,92,246,0.5), 0 0 20px rgba(139,92,246,0.25); }
+    .border-glow-red    { box-shadow: 0 0 0 1px rgba(239,68,68,0.6), 0 0 25px rgba(239,68,68,0.3); }
+
+    /* ── Scanline overlay ────────────────────────────────────── */
+    .scanlines::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent, transparent 2px,
+        rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* ── Video feed frame ────────────────────────────────────── */
+    #video-container {
+      position: relative;
+      overflow: hidden;
+    }
+    #video-container .corner {
+      position: absolute;
+      width: 20px; height: 20px;
+      border-color: var(--neon-cyan);
+      border-style: solid;
+    }
+    #video-container .corner-tl { top: 0; left: 0;   border-width: 2px 0 0 2px; }
+    #video-container .corner-tr { top: 0; right: 0;  border-width: 2px 2px 0 0; }
+    #video-container .corner-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+    #video-container .corner-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+    /* ── Pulsing status dot ──────────────────────────────────── */
+    .status-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+
+    /* ── Gauge ring ──────────────────────────────────────────── */
+    .gauge-ring {
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* ── Scrollbar styling ───────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.4); border-radius: 2px; }
+
+    /* ── Event log entry ─────────────────────────────────────── */
+    .event-entry {
+      animation: slide-in 0.4s ease-out;
+      border-left: 2px solid transparent;
+    }
+    .event-entry.CRITICAL { border-color: var(--neon-red);   background: rgba(239,68,68,0.06); }
+    .event-entry.HIGH     { border-color: var(--neon-amber);  background: rgba(245,158,11,0.06); }
+    .event-entry.MEDIUM   { border-color: var(--neon-cyan);   background: rgba(6,182,212,0.05); }
+    .event-entry.LOW      { border-color: var(--neon-green);  background: rgba(34,197,94,0.05); }
+    .event-entry.INFO     { border-color: rgba(255,255,255,0.2); }
+
+    /* ── Button styles ───────────────────────────────────────── */
+    .btn {
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 6px;
+      padding: 7px 16px;
+      outline: none;
+      border: 1px solid;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-cyan {
+      background: rgba(6,182,212,0.12);
+      border-color: rgba(6,182,212,0.5);
+      color: var(--neon-cyan);
+    }
+    .btn-cyan:hover {
+      background: rgba(6,182,212,0.22);
+      box-shadow: 0 0 16px rgba(6,182,212,0.4);
+    }
+
+    .btn-violet {
+      background: rgba(139,92,246,0.12);
+      border-color: rgba(139,92,246,0.5);
+      color: var(--neon-violet);
+    }
+    .btn-violet:hover {
+      background: rgba(139,92,246,0.22);
+      box-shadow: 0 0 16px rgba(139,92,246,0.4);
+    }
+
+    .btn-red {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.6);
+      color: var(--neon-red);
+    }
+    .btn-red:hover {
+      background: rgba(239,68,68,0.25);
+      box-shadow: 0 0 20px rgba(239,68,68,0.5);
+    }
+
+    .btn-green {
+      background: rgba(34,197,94,0.12);
+      border-color: rgba(34,197,94,0.5);
+      color: var(--neon-green);
+    }
+    .btn-green:hover {
+      background: rgba(34,197,94,0.22);
+      box-shadow: 0 0 16px rgba(34,197,94,0.4);
+    }
+
+    /* ── Lockdown overlay ────────────────────────────────────── */
+    #lockdown-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(239,68,68,0.08);
+      backdrop-filter: blur(2px);
+      animation: lockdown-flash 0.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    #lockdown-overlay.active { display: block; }
+    #lockdown-banner {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000;
+      background: rgba(239,68,68,0.9);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      font-size: 0.85rem;
+      animation: flicker 1s infinite;
+    }
+    #lockdown-banner.active { display: block; }
+
+    /* ── Slider ──────────────────────────────────────────────── */
+    .neon-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, var(--neon-cyan), var(--neon-violet));
+      outline: none;
+    }
+    .neon-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+
+    /* ── Metric tile ─────────────────────────────────────────── */
+    .metric-tile {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 2px;
+    }
+    .metric-tile .val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .metric-tile .lbl {
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── Detection badge ─────────────────────────────────────── */
+    .det-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .det-badge.CRITICAL { background: rgba(239,68,68,0.2);  color: var(--neon-red);   border: 1px solid rgba(239,68,68,0.5); }
+    .det-badge.HIGH     { background: rgba(245,158,11,0.2); color: var(--neon-amber); border: 1px solid rgba(245,158,11,0.5); }
+    .det-badge.MEDIUM   { background: rgba(6,182,212,0.15); color: var(--neon-cyan);  border: 1px solid rgba(6,182,212,0.4); }
+    .det-badge.LOW      { background: rgba(34,197,94,0.15); color: var(--neon-green); border: 1px solid rgba(34,197,94,0.4); }
+    .det-badge.INFO     { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); }
+  </style>
+</head>
+
+<body class="min-h-screen bg-obsidian font-mono">
+
+  <!-- ══════ Lockdown Overlay ══════ -->
+  <div id="lockdown-overlay"></div>
+  <div id="lockdown-banner">⚠ EMERGENCY LOCKDOWN ACTIVE — ALL STREAMS SUSPENDED ⚠</div>
+
+  <!-- ══════ Grid background ══════ -->
+  <div class="fixed inset-0 pointer-events-none" style="
+    background-image:
+      linear-gradient(rgba(6,182,212,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  "></div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════════════ -->
+  <header class="glass border-b border-white/5 px-4 py-2 flex items-center justify-between sticky top-0 z-50"
+          style="border-bottom-color:rgba(6,182,212,0.15)">
+
+    <!-- Brand -->
+    <div class="flex items-center gap-3">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="16" stroke="#06b6d4" stroke-width="1.5" opacity="0.6"/>
+        <path d="M9 17 L17 9 L25 17 L17 25 Z" stroke="#06b6d4" stroke-width="1.5" fill="rgba(6,182,212,0.1)"/>
+        <circle cx="17" cy="17" r="4" fill="#06b6d4" opacity="0.8"/>
+        <path d="M17 5 L17 9 M17 25 L17 29 M5 17 L9 17 M25 17 L29 17" stroke="#8b5cf6" stroke-width="1" opacity="0.7"/>
+      </svg>
+      <div>
+        <div class="text-xs text-neon-cyan text-glow-cyan font-bold tracking-widest uppercase leading-tight">
+          EdgeAI · Sentinel Nexus
+        </div>
+        <div class="text-[0.6rem] text-white/30 tracking-widest uppercase">
+          Autonomous Threat Intelligence Command Center
+        </div>
+      </div>
+    </div>
+
+    <!-- Center — System Clock -->
+    <div class="flex flex-col items-center gap-0.5">
+      <div id="sys-clock" class="text-lg font-bold text-neon-cyan text-glow-cyan tracking-widest">00:00:00</div>
+      <div id="sys-date"  class="text-[0.6rem] text-white/40 tracking-widest uppercase">0000-00-00</div>
+    </div>
+
+    <!-- Right — Status indicators -->
+    <div class="flex items-center gap-4">
+
+      <!-- Server heartbeat -->
+      <div class="flex items-center gap-2">
+        <div id="hb-dot" class="status-dot bg-neon-cyan" style="box-shadow:0 0 8px var(--neon-cyan)"></div>
+        <div class="flex flex-col">
+          <span class="text-[0.6rem] text-white/40 uppercase tracking-widest">Backend</span>
+          <span id="hb-status" class="text-[0.65rem] text-neon-cyan font-bold">CONNECTING…</span>
+        </div>
+      </div>
+
+      <!-- CPU gauge -->
+      <div class="flex items-center gap-2">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+          <circle id="cpu-ring" cx="18" cy="18" r="15" fill="none"
+                  stroke="#06b6d4" stroke-width="3" stroke-linecap="round"
+                  stroke-dasharray="94.25" stroke-dashoffset="94.25"
+                  class="gauge-ring" style="transition:stroke-dashoffset 0.5s"/>
+        </svg>
+        <div class="flex flex-col">
+          <span class="text-[0.6rem] text-white/40 uppercase tracking-widest">CPU</span>
+          <span id="cpu-pct" class="text-[0.65rem] text-neon-cyan font-bold">0%</span>
+        </div>
+      </div>
+
+      <!-- Memory gauge -->
+      <div class="flex items-center gap-2">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+          <circle id="mem-ring" cx="18" cy="18" r="15" fill="none"
+                  stroke="#8b5cf6" stroke-width="3" stroke-linecap="round"
+                  stroke-dasharray="94.25" stroke-dashoffset="94.25"
+                  class="gauge-ring" style="transition:stroke-dashoffset 0.5s"/>
+        </svg>
+        <div class="flex flex-col">
+          <span class="text-[0.6rem] text-white/40 uppercase tracking-widest">MEM</span>
+          <span id="mem-pct" class="text-[0.65rem] text-neon-violet font-bold">0%</span>
+        </div>
+      </div>
+
+      <!-- Source badge -->
+      <div class="glass rounded px-2 py-1 flex flex-col items-center">
+        <span class="text-[0.55rem] text-white/30 uppercase tracking-widest">Source</span>
+        <span id="src-badge" class="text-[0.65rem] font-bold text-neon-amber">SYNTHETIC</span>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CONTROLS BAR
+  ══════════════════════════════════════════════════════════ -->
+  <div class="glass mx-3 mt-2 px-4 py-2 flex items-center gap-4 flex-wrap border-white/5">
+
+    <button class="btn btn-cyan" onclick="sendCmd('start')">▶ Start Stream</button>
+    <button class="btn btn-violet" onclick="sendCmd('stop')">⏸ Pause</button>
+    <button class="btn btn-green" onclick="sendCmd('ai_toggle')" id="ai-btn">◎ AI ON</button>
+    <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+      <span class="text-[0.65rem] text-white/40 whitespace-nowrap">AI SENSITIVITY</span>
+      <input type="range" min="0.1" max="1.0" step="0.05" value="0.4"
+             class="neon-slider" id="sensitivity-slider"
+             oninput="updateSensitivity(this.value)" />
+      <span id="sens-val" class="text-[0.65rem] text-neon-cyan w-8">0.40</span>
+    </div>
+    <div class="ml-auto">
+      <button class="btn btn-red" onclick="triggerLockdown()" style="letter-spacing:0.15em">
+        ⚡ EMERGENCY LOCKDOWN
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       MAIN OPERATIONAL GRID
+  ══════════════════════════════════════════════════════════ -->
+  <main class="grid grid-cols-1 xl:grid-cols-3 gap-3 mx-3 mt-3" style="min-height:460px">
+
+    <!-- ═══ LEFT — Camera Feed (spans 2 cols on xl) ═══ -->
+    <div class="xl:col-span-2 glass glass-cyan flex flex-col" style="min-height:420px">
+
+      <!-- Feed header -->
+      <div class="flex items-center justify-between px-3 py-2 border-b border-white/5">
+        <div class="flex items-center gap-2">
+          <div class="status-dot bg-neon-red" id="rec-dot"
+               style="box-shadow:0 0 8px var(--neon-red)"></div>
+          <span class="text-[0.65rem] text-neon-red font-bold tracking-widest">● REC</span>
+          <span class="text-[0.6rem] text-white/30 ml-2">CAM-01 · SECTOR-ALPHA · 640×480</span>
+        </div>
+        <div class="flex items-center gap-3 text-[0.6rem] text-white/40">
+          <span id="feed-fps" class="text-neon-cyan font-bold">0.00 FPS</span>
+          <span>·</span>
+          <span id="feed-latency" class="text-neon-green font-bold">0.00 ms</span>
+          <span>·</span>
+          <span id="feed-frame" class="text-white/30">FRM 0</span>
+        </div>
+      </div>
+
+      <!-- Video feed with bounding-box canvas overlay -->
+      <div id="video-container" class="relative flex-1 scanlines flex items-center justify-center"
+           style="background:#020408; min-height:360px">
+
+        <!-- Corner brackets -->
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+
+        <!-- Live image from backend JPEG stream -->
+        <img id="live-img"
+             style="max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated;z-index:1"
+             alt="Live feed" />
+
+        <!-- Canvas for additional overlays & bounding boxes -->
+        <canvas id="bb-canvas"
+                style="position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none">
+        </canvas>
+
+        <!-- HUD overlays (always on top) -->
+        <div class="absolute top-2 left-2 z-20 text-[0.6rem] text-neon-cyan opacity-70 leading-5">
+          <div>SENTINEL·OS v3.1.4</div>
+          <div id="hud-ts">--:--:--.---</div>
+        </div>
+        <div class="absolute top-2 right-2 z-20 text-right text-[0.6rem] text-neon-violet opacity-70 leading-5">
+          <div>ZONE·COVERAGE 100%</div>
+          <div id="hud-det-count">0 DETECTIONS</div>
+        </div>
+        <div class="absolute bottom-2 left-2 z-20 text-[0.55rem] text-white/30">
+          LAT: 28.6139°N · LON: 77.2090°E
+        </div>
+        <div class="absolute bottom-2 right-2 z-20 text-[0.55rem] text-white/30" id="hud-src">
+          SOURCE: SYNTHETIC
+        </div>
+
+        <!-- No-signal placeholder (shown when not streaming) -->
+        <div id="no-signal"
+             class="absolute inset-0 z-20 flex flex-col items-center justify-center"
+             style="display:none!important">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" class="mb-4 opacity-30">
+            <rect x="8" y="12" width="48" height="36" rx="3" stroke="#06b6d4" stroke-width="2"/>
+            <line x1="20" y1="48" x2="44" y2="52" stroke="#06b6d4" stroke-width="2"/>
+            <line x1="20" y1="52" x2="44" y2="52" stroke="#06b6d4" stroke-width="2"/>
+            <path d="M24 30 L32 22 L40 30 L32 38 Z" stroke="#06b6d4" stroke-width="1.5"/>
+          </svg>
+          <span class="text-neon-cyan text-glow-cyan text-xs font-bold tracking-widest animate-flicker">
+            SIGNAL LOST
+          </span>
+          <span class="text-white/30 text-[0.6rem] mt-1">Awaiting stream from backend…</span>
+        </div>
+
+      </div>
+
+      <!-- Active detections row -->
+      <div class="px-3 py-2 border-t border-white/5 flex gap-2 flex-wrap min-h-[36px]" id="det-row">
+        <span class="text-[0.6rem] text-white/20 italic">No active detections</span>
+      </div>
+    </div>
+
+    <!-- ═══ RIGHT — Event Feed & AI Threat Log ═══ -->
+    <div class="flex flex-col gap-3">
+
+      <!-- AI Threat Intelligence Log -->
+      <div class="glass glass-violet flex flex-col" style="flex:1;min-height:200px;max-height:280px">
+        <div class="flex items-center justify-between px-3 py-2 border-b border-white/5">
+          <div class="flex items-center gap-2">
+            <div class="status-dot bg-neon-violet" style="box-shadow:0 0 6px var(--neon-violet)"></div>
+            <span class="text-[0.65rem] text-neon-violet font-bold tracking-widest">AI THREAT INTEL</span>
+          </div>
+          <div class="text-[0.6rem] text-white/30">
+            <span id="threat-count-badge" class="text-neon-red font-bold">0</span> active
+          </div>
+        </div>
+        <div class="overflow-y-auto flex-1 p-2 space-y-1" id="threat-log">
+          <div class="text-[0.6rem] text-white/20 italic p-2">Awaiting AI engine…</div>
+        </div>
+      </div>
+
+      <!-- Live Event Feed -->
+      <div class="glass glass-cyan flex flex-col" style="flex:1;min-height:180px;max-height:230px">
+        <div class="flex items-center justify-between px-3 py-2 border-b border-white/5">
+          <div class="flex items-center gap-2">
+            <div class="status-dot bg-neon-green" style="box-shadow:0 0 6px var(--neon-green)"></div>
+            <span class="text-[0.65rem] text-neon-green font-bold tracking-widest">LIVE EVENT FEED</span>
+          </div>
+          <button class="text-[0.6rem] text-white/30 hover:text-neon-cyan transition-colors"
+                  onclick="clearEvents()">CLR</button>
+        </div>
+        <div class="overflow-y-auto flex-1 p-2 space-y-1" id="event-log">
+          <div class="text-[0.6rem] text-white/20 italic p-2">No events yet.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TELEMETRY CHARTS ROW
+  ══════════════════════════════════════════════════════════ -->
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-3 mx-3 mt-3">
+
+    <!-- FPS Chart -->
+    <div class="glass glass-cyan p-3">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-[0.65rem] text-neon-cyan font-bold tracking-widest uppercase">FPS Telemetry</span>
+        <span id="chart-fps-val" class="text-sm font-bold text-neon-cyan text-glow-cyan">0.00</span>
+      </div>
+      <canvas id="fps-chart" height="70" style="width:100%"></canvas>
+    </div>
+
+    <!-- Latency Chart -->
+    <div class="glass glass-violet p-3">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-[0.65rem] text-neon-violet font-bold tracking-widest uppercase">Latency (ms)</span>
+        <span id="chart-lat-val" class="text-sm font-bold text-neon-violet text-glow-violet">0.000</span>
+      </div>
+      <canvas id="lat-chart" height="70" style="width:100%"></canvas>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       BOTTOM METRICS BAR
+  ══════════════════════════════════════════════════════════ -->
+  <footer class="mx-3 mt-3 mb-3 glass px-6 py-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+
+    <div class="metric-tile">
+      <span class="val text-neon-cyan text-glow-cyan" id="m-fps">0.00</span>
+      <span class="lbl">Live FPS</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val text-neon-violet text-glow-violet" id="m-lat">0.00</span>
+      <span class="lbl">Latency ms</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val text-neon-amber" id="m-dropped">0</span>
+      <span class="lbl">Dropped</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val text-neon-red text-glow-red" id="m-threats">0</span>
+      <span class="lbl">Threats Total</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val text-neon-green text-glow-green" id="m-frames">0</span>
+      <span class="lbl">Frames</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val text-neon-cyan" id="m-dets">0</span>
+      <span class="lbl">Active Dets.</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val" id="m-shm" style="color:#22c55e">SHM</span>
+      <span class="lbl">Memory</span>
+    </div>
+    <div class="metric-tile">
+      <span class="val" id="m-ai" style="color:#8b5cf6">YOLO</span>
+      <span class="lbl">AI Engine</span>
+    </div>
+
+  </footer>
+
+  <!-- ══════════════════════════════════════════════════════════
+       JAVASCRIPT APPLICATION CORE
+  ══════════════════════════════════════════════════════════ -->
+  <script>
+  'use strict';
+
+  // ── Configuration ────────────────────────────────────────────────────────────
+  const WS_URL       = `ws://${location.hostname}:8000/ws`;
+  const MAX_LOG_ROWS = 60;
+
+  // ── WebSocket State ───────────────────────────────────────────────────────────
+  let ws         = null;
+  let wsAlive    = false;
+  let reconnectT = null;
+
+  // ── App State ─────────────────────────────────────────────────────────────────
+  let state = {
+    fps:          0,
+    latency:      0,
+    dropped:      0,
+    threats:      0,
+    frames:       0,
+    detections:   [],
+    fpsHistory:   [],
+    latHistory:   [],
+    streaming:    false,
+    lockdown:     false,
+    aiEnabled:    true,
+    shmAttached:  false,
+    yoloReady:    false,
+    source:       'synthetic',
+  };
+
+  // ── Colour helpers ────────────────────────────────────────────────────────────
+  const COLORS = {
+    CRITICAL: '#ef4444',
+    HIGH:     '#f59e0b',
+    MEDIUM:   '#06b6d4',
+    LOW:      '#22c55e',
+    INFO:     '#94a3b8',
+  };
+
+  // ── DOM Refs ──────────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+
+  const liveImg      = $('live-img');
+  const bbCanvas     = $('bb-canvas');
+  const bbCtx        = bbCanvas.getContext('2d');
+  const fpsChartEl   = $('fps-chart');
+  const latChartEl   = $('lat-chart');
+  const fpsCtx       = fpsChartEl.getContext('2d');
+  const latCtx       = latChartEl.getContext('2d');
+  const threatLog    = $('threat-log');
+  const eventLog     = $('event-log');
+  const detRow       = $('det-row');
+  const noSignal     = $('no-signal');
+
+  // ── Clock ─────────────────────────────────────────────────────────────────────
+  function tickClock() {
+    const now  = new Date();
+    const hh   = String(now.getHours()).padStart(2,'0');
+    const mm   = String(now.getMinutes()).padStart(2,'0');
+    const ss   = String(now.getSeconds()).padStart(2,'0');
+    const ms   = String(now.getMilliseconds()).padStart(3,'0');
+    $('sys-clock').textContent = `${hh}:${mm}:${ss}`;
+    $('sys-date').textContent  = now.toISOString().split('T')[0];
+    $('hud-ts').textContent    = `${hh}:${mm}:${ss}.${ms}`;
+  }
+  setInterval(tickClock, 50);
+  tickClock();
+
+  // ── WebSocket Connection ──────────────────────────────────────────────────────
+  function connect() {
+    if (ws) { try { ws.close(); } catch(_) {} }
+
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      wsAlive = true;
+      $('hb-dot').style.background = 'var(--neon-green)';
+      $('hb-dot').style.boxShadow  = '0 0 8px var(--neon-green)';
+      $('hb-status').textContent   = 'ONLINE';
+      $('hb-status').style.color   = 'var(--neon-green)';
+      addEvent('INFO', 'WebSocket connection established.');
+      clearTimeout(reconnectT);
+    };
+
+    ws.onmessage = evt => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'ping') return;
+        if (msg.type === 'frame_stats') processFrame(msg);
+      } catch(e) { console.error('WS parse error', e); }
+    };
+
+    ws.onclose = ws.onerror = () => {
+      wsAlive = false;
+      $('hb-dot').style.background = 'var(--neon-red)';
+      $('hb-dot').style.boxShadow  = '0 0 8px var(--neon-red)';
+      $('hb-status').textContent   = 'OFFLINE';
+      $('hb-status').style.color   = 'var(--neon-red)';
+      reconnectT = setTimeout(connect, 3000);
+    };
+  }
+
+  // ── Process Incoming Frame Payload ────────────────────────────────────────────
+  function processFrame(msg) {
+    // Update state
+    state.fps        = msg.fps;
+    state.latency    = msg.latency_ms;
+    state.dropped    = msg.dropped;
+    state.threats    = msg.total_threats;
+    state.frames     = msg.frame_id;
+    state.detections = msg.detections || [];
+    state.fpsHistory = msg.fps_history || [];
+    state.latHistory = msg.latency_history || [];
+    state.streaming  = msg.streaming;
+    state.lockdown   = msg.lockdown;
+    state.aiEnabled  = msg.ai_enabled;
+    state.shmAttached= msg.shm_attached;
+    state.yoloReady  = msg.yolo_ready;
+    state.source     = msg.source;
+
+    // ── Live image ──────────────────────────────────────────────────────────
+    if (msg.frame_b64) {
+      liveImg.src = 'data:image/jpeg;base64,' + msg.frame_b64;
+    }
+
+    // ── Lockdown ────────────────────────────────────────────────────────────
+    const lockdownOverlay = $('lockdown-overlay');
+    const lockdownBanner  = $('lockdown-banner');
+    if (msg.lockdown) {
+      lockdownOverlay.classList.add('active');
+      lockdownBanner.classList.add('active');
+    } else {
+      lockdownOverlay.classList.remove('active');
+      lockdownBanner.classList.remove('active');
+    }
+
+    // ── HUD overlays ─────────────────────────────────────────────────────────
+    $('hud-det-count').textContent = `${state.detections.length} DETECT`;
+    $('hud-src').textContent       = `SOURCE: ${state.source.toUpperCase()}`;
+    $('src-badge').textContent     = state.source.toUpperCase();
+
+    // ── Header gauges ─────────────────────────────────────────────────────────
+    if (msg.cpu_pct !== undefined) updateGauge('cpu-ring', msg.cpu_pct, $('cpu-pct'), '%');
+    if (msg.mem_pct !== undefined) updateGauge('mem-ring', msg.mem_pct, $('mem-pct'), '%');
+
+    // ── Feed header ───────────────────────────────────────────────────────────
+    $('feed-fps').textContent     = `${state.fps.toFixed(2)} FPS`;
+    $('feed-latency').textContent = `${state.latency.toFixed(2)} ms`;
+    $('feed-frame').textContent   = `FRM ${String(state.frames).padStart(8,'0')}`;
+
+    // ── Bottom metrics ────────────────────────────────────────────────────────
+    $('m-fps').textContent     = state.fps.toFixed(2);
+    $('m-lat').textContent     = state.latency.toFixed(3);
+    $('m-dropped').textContent = state.dropped;
+    $('m-threats').textContent = state.threats;
+    $('m-frames').textContent  = formatNum(state.frames);
+    $('m-dets').textContent    = state.detections.length;
+
+    const shmEl = $('m-shm');
+    shmEl.textContent  = state.shmAttached ? 'LIVE' : 'SYN';
+    shmEl.style.color  = state.shmAttached ? 'var(--neon-green)' : 'var(--neon-amber)';
+
+    const aiEl = $('m-ai');
+    aiEl.textContent = state.yoloReady ? 'READY' : 'MOCK';
+    aiEl.style.color = state.yoloReady ? 'var(--neon-violet)' : 'var(--neon-amber)';
+
+    // ── Charts ─────────────────────────────────────────────────────────────────
+    if (state.fpsHistory.length > 1) drawLineChart(fpsCtx, fpsChartEl, state.fpsHistory, '#06b6d4', 30, 90);
+    if (state.latHistory.length  > 1) drawLineChart(latCtx, latChartEl, state.latHistory, '#8b5cf6', 0, 20);
+    $('chart-fps-val').textContent = state.fps.toFixed(2);
+    $('chart-lat-val').textContent = state.latency.toFixed(3);
+
+    // ── Detection row ──────────────────────────────────────────────────────────
+    renderDetectionRow(state.detections);
+
+    // ── Threat log ─────────────────────────────────────────────────────────────
+    renderThreatLog(state.detections, msg.timestamp);
+
+    // ── REC dot blink when streaming ───────────────────────────────────────────
+    $('rec-dot').style.display = state.streaming ? '' : 'none';
+    $('threat-count-badge').textContent = state.detections.filter(
+      d => d.severity === 'CRITICAL' || d.severity === 'HIGH'
+    ).length;
+  }
+
+  // ── Gauge Ring Updater ────────────────────────────────────────────────────────
+  function updateGauge(id, pct, labelEl, suffix='') {
+    const r   = 15;
+    const c   = 2 * Math.PI * r;   // ≈ 94.25
+    const off = c * (1 - pct / 100);
+    $(id).style.strokeDashoffset = off;
+    labelEl.textContent = Math.round(pct) + suffix;
+    const hue = pct > 80 ? 'var(--neon-red)' : pct > 60 ? 'var(--neon-amber)' : null;
+    if (hue) { $(id).style.stroke = hue; labelEl.style.color = hue; }
+  }
+
+  // ── Detection Row ─────────────────────────────────────────────────────────────
+  function renderDetectionRow(dets) {
+    if (!dets || dets.length === 0) {
+      detRow.innerHTML = '<span class="text-[0.6rem] text-white/20 italic">No active detections</span>';
+      return;
+    }
+    detRow.innerHTML = dets.map(d => `
+      <div class="flex items-center gap-1.5 glass rounded px-2 py-1">
+        <span class="det-badge ${d.severity}">${d.severity}</span>
+        <span class="text-[0.65rem] font-bold" style="color:${COLORS[d.severity]||'#aaa'}">${d.threat}</span>
+        <span class="text-[0.55rem] text-white/40">${(d.confidence*100).toFixed(0)}%</span>
+      </div>
+    `).join('');
+  }
+
+  // ── Threat Log ────────────────────────────────────────────────────────────────
+  const _loggedThreats = new Set();
+
+  function renderThreatLog(dets, ts) {
+    if (!dets || dets.length === 0) return;
+    dets.forEach(det => {
+      const key = `${ts}-${det.threat}-${det.bbox?.join(',')}`;
+      if (_loggedThreats.has(key)) return;
+      _loggedThreats.add(key);
+
+      const color = COLORS[det.severity] || '#aaa';
+      const timeStr = new Date(ts).toLocaleTimeString('en-US', { hour12: false,
+        hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+      const el = document.createElement('div');
+      el.className = `event-entry ${det.severity} rounded px-2 py-1 mb-1`;
+      el.innerHTML = `
+        <div class="flex items-center gap-2 justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="det-badge ${det.severity}">${det.severity}</span>
+            <span class="text-[0.65rem] font-bold" style="color:${color}">${det.threat}</span>
+            <span class="text-[0.55rem] text-white/50">${det.label}</span>
+          </div>
+          <span class="text-[0.55rem] text-white/30">${timeStr}</span>
+        </div>
+        <div class="text-[0.55rem] text-white/40 mt-0.5">
+          CONF: ${(det.confidence*100).toFixed(1)}% &nbsp; BBOX: [${det.bbox?.join(', ')}]
+        </div>`;
+
+      threatLog.insertBefore(el, threatLog.firstChild);
+
+      // Cap rows
+      while (threatLog.children.length > MAX_LOG_ROWS) {
+        threatLog.removeChild(threatLog.lastChild);
+      }
+
+      // Auto-add to event feed for critical/high
+      if (det.severity === 'CRITICAL' || det.severity === 'HIGH') {
+        addEvent(det.severity, `${det.threat} detected — ${det.label} @ ${(det.confidence*100).toFixed(0)}% conf`);
+      }
+    });
+
+    // Reset placeholder
+    if (threatLog.querySelector('.italic')) {
+      threatLog.querySelector('.italic').remove();
+    }
+  }
+
+  // ── Event Feed ────────────────────────────────────────────────────────────────
+  let _evtCount = 0;
+
+  function addEvent(severity, message) {
+    // Remove placeholder if present
+    const placeholder = eventLog.querySelector('.italic');
+    if (placeholder) placeholder.remove();
+
+    const color = COLORS[severity] || '#aaa';
+    const now = new Date().toLocaleTimeString('en-US',
+      { hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+    const el = document.createElement('div');
+    el.className = `event-entry ${severity} rounded px-2 py-1`;
+    el.innerHTML = `
+      <div class="flex items-center gap-2 justify-between">
+        <span class="det-badge ${severity}">${severity}</span>
+        <span class="text-[0.6rem]" style="color:${color};flex:1;padding-left:4px">${message}</span>
+        <span class="text-[0.55rem] text-white/30 shrink-0">${now}</span>
+      </div>`;
+
+    eventLog.insertBefore(el, eventLog.firstChild);
+    while (eventLog.children.length > MAX_LOG_ROWS)
+      eventLog.removeChild(eventLog.lastChild);
+
+    _evtCount++;
+  }
+
+  function clearEvents() {
+    eventLog.innerHTML = '<div class="text-[0.6rem] text-white/20 italic p-2">Log cleared.</div>';
+    threatLog.innerHTML = '<div class="text-[0.6rem] text-white/20 italic p-2">Log cleared.</div>';
+    _loggedThreats.clear();
+  }
+
+  // ── Line Chart Renderer ───────────────────────────────────────────────────────
+  function drawLineChart(ctx, canvas, data, color, yMin, yMax) {
+    const W = canvas.offsetWidth;
+    const H = canvas.offsetHeight || 70;
+    if (W === 0 || H === 0) return;
+
+    canvas.width  = W;
+    canvas.height = H;
+
+    const len = data.length;
+    if (len < 2) return;
+
+    const minV = yMin !== undefined ? yMin : Math.min(...data) * 0.9;
+    const maxV = yMax !== undefined ? yMax : Math.max(...data) * 1.1 || 1;
+    const rng  = maxV - minV || 1;
+
+    const toX = i  => (i / (len - 1)) * W;
+    const toY = v  => H - ((v - minV) / rng) * H * 0.85 - H * 0.05;
+
+    // Grid lines
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth   = 1;
+    for (let g = 0; g <= 4; g++) {
+      const y = (g / 4) * H;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Gradient fill under curve
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, color.replace(')', ',0.4)').replace('rgb','rgba'));
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(toX(0), H);
+    data.forEach((v, i) => ctx.lineTo(toX(i), toY(v)));
+    ctx.lineTo(toX(len - 1), H);
+    ctx.closePath();
+    ctx.fill();
+
+    // Line
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 2;
+    ctx.lineJoin    = 'round';
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 8;
+    ctx.beginPath();
+    data.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Latest value dot
+    const lx = toX(len - 1), ly = toY(data[len - 1]);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 12;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // ── WebSocket Control Commands ────────────────────────────────────────────────
+  function sendCmd(cmd, extra) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ cmd, ...extra }));
+    }
+    // Optimistic UI updates
+    if (cmd === 'start') addEvent('INFO', 'Stream START requested.');
+    if (cmd === 'stop')  addEvent('INFO', 'Stream PAUSE requested.');
+    if (cmd === 'ai_toggle') {
+      state.aiEnabled = !state.aiEnabled;
+      $('ai-btn').textContent = state.aiEnabled ? '◎ AI ON' : '◎ AI OFF';
+      $('ai-btn').className   = state.aiEnabled ? 'btn btn-green' : 'btn btn-violet';
+      addEvent('INFO', `AI engine ${state.aiEnabled ? 'ENABLED' : 'DISABLED'}.`);
+    }
+  }
+
+  function updateSensitivity(val) {
+    const v = parseFloat(val).toFixed(2);
+    $('sens-val').textContent = v;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ cmd: 'sensitivity', value: v }));
+    }
+  }
+
+  function triggerLockdown() {
+    if (!confirm('⚠ CONFIRM EMERGENCY LOCKDOWN?\n\nThis will suspend all feeds and log a critical event.')) return;
+    sendCmd('lockdown');
+    addEvent('CRITICAL', '🔒 EMERGENCY LOCKDOWN INITIATED BY OPERATOR');
+    $('lockdown-overlay').classList.add('active');
+    $('lockdown-banner').classList.add('active');
+  }
+
+  // Also expose an unlock function
+  function triggerUnlock() {
+    sendCmd('unlock');
+    addEvent('INFO', 'Lockdown lifted by operator.');
+    $('lockdown-overlay').classList.remove('active');
+    $('lockdown-banner').classList.remove('active');
+  }
+
+  // Click the banner to unlock
+  $('lockdown-banner').addEventListener('click', triggerUnlock);
+
+  // ── Utility ───────────────────────────────────────────────────────────────────
+  function formatNum(n) {
+    if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+    return String(n);
+  }
+
+  // ── Animated Demo Mode (runs when WS is offline) ──────────────────────────────
+  // Keeps the UI lively with synthetic data so the UI can be appreciated
+  // without a running backend.
+  let _demoFrame = 0;
+  let _demoDets  = [
+    { label:'person',   threat:'INTRUDER',           severity:'CRITICAL', confidence:0.91, bbox:[100,80,180,180] },
+    { label:'car',      threat:'VEHICLE',            severity:'MEDIUM',   confidence:0.85, bbox:[380,190,460,270] },
+    { label:'backpack', threat:'SUSPICIOUS_PACKAGE', severity:'HIGH',     confidence:0.78, bbox:[240,330,300,400] },
+  ];
+
+  let _demoPrevTime  = performance.now();
+  let _demoFpsAccum  = 0;
+  let _demoFpsCycles = 0;
+
+  function demoTick() {
+    if (wsAlive) return;   // Hand off to real data
+
+    const now     = performance.now();
+    const dtMs    = now - _demoPrevTime;
+    _demoPrevTime = now;
+
+    _demoFrame++;
+    _demoFpsAccum  += 1000 / dtMs;
+    _demoFpsCycles += 1;
+
+    const fps   = _demoFpsCycles > 0 ? _demoFpsAccum / _demoFpsCycles : 60;
+    const lat   = 1.5 + Math.random() * 0.8;
+    const t     = _demoFrame / 60;
+
+    // Synthetic history arrays
+    state.fpsHistory = [...(state.fpsHistory.slice(-59)), parseFloat(fps.toFixed(2))];
+    state.latHistory = [...(state.latHistory.slice(-59)), parseFloat(lat.toFixed(3))];
+
+    state.fps     = fps;
+    state.latency = lat;
+    state.frames  = _demoFrame;
+    state.dropped = Math.floor(_demoFrame * 0.0001);
+
+    // Randomly change detections every 90 frames
+    if (_demoFrame % 90 === 0) {
+      const count = 1 + Math.floor(Math.random() * 3);
+      state.detections = _demoDets.slice(0, count);
+      state.threats   += state.detections.filter(d => d.severity === 'CRITICAL').length;
+    }
+
+    // Animated synthetic bounding boxes on the canvas
+    drawDemoCanvas(t);
+
+    // Update all UI elements
+    $('feed-fps').textContent     = `${fps.toFixed(2)} FPS`;
+    $('feed-latency').textContent = `${lat.toFixed(2)} ms`;
+    $('feed-frame').textContent   = `FRM ${String(_demoFrame).padStart(8,'0')}`;
+    $('m-fps').textContent        = fps.toFixed(2);
+    $('m-lat').textContent        = lat.toFixed(3);
+    $('m-dropped').textContent    = state.dropped;
+    $('m-threats').textContent    = state.threats;
+    $('m-frames').textContent     = formatNum(state.frames);
+    $('m-dets').textContent       = state.detections.length;
+    $('chart-fps-val').textContent = fps.toFixed(2);
+    $('chart-lat-val').textContent = lat.toFixed(3);
+    $('hud-ts').textContent        = new Date().toISOString().split('T')[1].replace('Z','').slice(0,12);
+
+    // CPU/MEM synthetic
+    const cpuPct = 20 + 15 * Math.sin(t * 0.3);
+    const memPct = 42 + 8  * Math.sin(t * 0.1);
+    updateGauge('cpu-ring', cpuPct, $('cpu-pct'), '%');
+    updateGauge('mem-ring', memPct, $('mem-pct'), '%');
+
+    renderDetectionRow(state.detections);
+    if (state.fpsHistory.length > 1)
+      drawLineChart(fpsCtx, fpsChartEl, state.fpsHistory, '#06b6d4', 30, 90);
+    if (state.latHistory.length > 1)
+      drawLineChart(latCtx, latChartEl, state.latHistory, '#8b5cf6', 0, 20);
+
+    if (_demoFpsCycles > 300) {
+      _demoFpsAccum  = 0;
+      _demoFpsCycles = 0;
+    }
+
+    requestAnimationFrame(demoTick);
+  }
+
+  // ── Demo Canvas Renderer ──────────────────────────────────────────────────────
+  function drawDemoCanvas(t) {
+    const c = bbCanvas;
+    const W = c.offsetWidth, H = c.offsetHeight;
+    if (!W || !H) return;
+    c.width  = W;
+    c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw animated objects
+    const objs = [
+      { x: 100 + 60*Math.sin(t*0.5), y:  80 + 30*Math.cos(t*0.4),  w:80, h:100, label:'INTRUDER',  sev:'CRITICAL', conf:0.91 },
+      { x: 380 + 50*Math.cos(t*0.3), y: 190 + 40*Math.sin(t*0.35), w:60, h:80,  label:'VEHICLE',   sev:'MEDIUM',   conf:0.85 },
+      { x: 240 + 40*Math.sin(t*0.6), y: 330 + 20*Math.cos(t*0.5),  w:50, h:50,  label:'PACKAGE',   sev:'HIGH',     conf:0.78 },
+    ];
+
+    // Scale coords to canvas size (images notionally 640×480)
+    const sx = W / 640, sy = H / 480;
+
+    objs.slice(0, 1 + (Math.floor(t) % 3)).forEach(obj => {
+      const color = COLORS[obj.sev];
+      const x1 = obj.x * sx, y1 = obj.y * sy;
+      const x2 = (obj.x + obj.w) * sx, y2 = (obj.y + obj.h) * sy;
+      const bw = x2 - x1, bh = y2 - y1;
+
+      // Pulsing glow rect
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 12 + 8 * Math.sin(t * 3);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 2;
+      ctx.strokeRect(x1, y1, bw, bh);
+      ctx.shadowBlur  = 0;
+
+      // Corner accents
+      const cl = 10;
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 3;
+      [[x1,y1,cl,0,0,cl],[x2-cl,y1,-cl,0,0,cl],[x1,y2,cl,0,0,-cl],[x2-cl,y2,-cl,0,0,-cl]].forEach(([px,py,dx1,dy1,dx2,dy2]) => {
+        ctx.beginPath();
+        ctx.moveTo(px,py); ctx.lineTo(px+dx1, py+dy1);
+        ctx.moveTo(px,py); ctx.lineTo(px+dx2, py+dy2);
+        ctx.stroke();
+      });
+
+      // Label
+      const lh = 16;
+      ctx.fillStyle = color + '33';
+      ctx.fillRect(x1, y1 - lh, bw, lh);
+      ctx.fillStyle = color;
+      ctx.font = `bold 10px "JetBrains Mono", monospace`;
+      ctx.fillText(`${obj.label}  ${(obj.conf*100).toFixed(0)}%`, x1 + 4, y1 - 4);
+    });
+
+    // Scan line
+    const scanY = ((t * 80) % H);
+    const scanGrad = ctx.createLinearGradient(0, scanY - 4, 0, scanY + 4);
+    scanGrad.addColorStop(0,   'rgba(6,182,212,0)');
+    scanGrad.addColorStop(0.5, 'rgba(6,182,212,0.6)');
+    scanGrad.addColorStop(1,   'rgba(6,182,212,0)');
+    ctx.fillStyle = scanGrad;
+    ctx.fillRect(0, scanY - 4, W, 8);
+  }
+
+  // ── Handle img-not-loading gracefully ─────────────────────────────────────────
+  liveImg.addEventListener('error', () => {
+    liveImg.style.display = 'none';
+  });
+  liveImg.addEventListener('load', () => {
+    liveImg.style.display = '';
+  });
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────────
+  addEvent('INFO', 'EdgeAI Sentinel Nexus initializing…');
+  addEvent('INFO', `Connecting to backend at ${WS_URL}`);
+
+  connect();
+  requestAnimationFrame(demoTick);   // start demo immediately; hands off when WS connects
+
+  // Initial placeholder add to threat log
+  setTimeout(() => {
+    // Auto-seed a few demo log entries so the UI isn't empty
+    renderThreatLog([
+      { label:'person',   threat:'INTRUDER',  severity:'CRITICAL', confidence:0.91, bbox:[100,80,180,180] },
+      { label:'backpack', threat:'SUSPICIOUS_PACKAGE', severity:'HIGH', confidence:0.78, bbox:[240,330,300,400] },
+    ], new Date().toISOString());
+  }, 800);
+
+  </script>
+</body>
+</html>
